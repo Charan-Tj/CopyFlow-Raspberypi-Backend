@@ -19,15 +19,15 @@ file_path = f"temp_uploads/{job_id}.pdf"
 if os.path.exists(file_path):
     os.remove(file_path)
 
-print("🚀 Starting CopyFlow Kiosk Verification")
+print("[*] Starting CopyFlow Kiosk Verification")
 
 # 1. Test Health
 print("\n[1/4] Testing Health Check...")
 resp = client.get("/health")
 if resp.status_code == 200:
-    print(f"✅ Online: {resp.json()}")
+    print(f"[OK] Online: {resp.json()}")
 else:
-    print(f"❌ Failed: {resp.status_code}")
+    print(f"[FAILED] Failed: {resp.status_code}")
     sys.exit(1)
 
 # 2. Test Upload (Mocking Backend Register)
@@ -52,15 +52,15 @@ if os.path.exists(dummy_pdf):
     os.remove(dummy_pdf)
 
 if resp.status_code == 200 and resp.json().get("job_id") == job_id:
-    print("✅ Upload Successful")
+    print("[OK] Upload Successful")
     # Verify the file was moved to temp_uploads/{job_id}.pdf
     if os.path.exists(file_path):
-        print(f"✅ Internal File Stored: {file_path}")
+        print(f"[OK] Internal File Stored: {file_path}")
     else:
-        print("❌ Internal File Missing!")
+        print("[FAILED] Internal File Missing!")
         sys.exit(1)
 else:
-    print(f"❌ Upload Failed: {resp.text}")
+    print(f"[FAILED] Upload Failed: {resp.text}")
     sys.exit(1)
 
 # 3. Test Print with Valid Token
@@ -78,17 +78,17 @@ backend_client.get_print_token = MagicMock(return_value=valid_token)
 resp = client.post(f"/print/{job_id}")
 
 if resp.status_code == 200 and resp.json()["status"] == "printed":
-    print("✅ Print Request Successful")
+    print("[OK] Print Request Successful")
 else:
-    print(f"❌ Print Failed: {resp.text}")
+    print(f"[FAILED] Print Failed: {resp.text}")
     sys.exit(1)
 
 # 4. Verify Cleanup
 print("\n[4/4] Verifying Cleanup...")
 if not os.path.exists(file_path):
-    print("✅ File removed from temp storage")
+    print("[OK] File removed from temp storage")
 else:
-    print("❌ File still exists! (Security Risk)")
+    print("[FAILED] File still exists! (Security Risk)")
     sys.exit(1)
 
-print("\n✨ VERIFICATION COMPLETE - SYSTEM READY ✨")
+print("\n[*] VERIFICATION COMPLETE - SYSTEM READY [*]")

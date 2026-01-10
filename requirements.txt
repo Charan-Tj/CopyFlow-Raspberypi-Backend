@@ -4,3 +4,4 @@ pydantic-settings
 requests
 python-multipart
 jinja2
+httpx
