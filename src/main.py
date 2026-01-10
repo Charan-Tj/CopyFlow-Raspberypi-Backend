@@ -19,6 +19,9 @@ async def lifespan(app: FastAPI):
     app_logger.info(f"Kiosk {settings.KIOSK_ID} Online")
     app_logger.info(f"Using Driver: {settings.PRINTER_DRIVER}")
     
+    # Ensure temp dir exists
+    os.makedirs("temp_uploads", exist_ok=True)
+    
     if settings.ENABLE_HOTSPOT:
         network_manager.start_hotspot()
 
