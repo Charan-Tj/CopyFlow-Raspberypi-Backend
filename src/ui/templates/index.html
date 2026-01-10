@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiosk Dev Dashboard</title>
+    <style>
+        body { font-family: monospace; background: #121212; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: #1e1e1e; padding: 15px; margin-bottom: 20px; border: 1px solid #333; border-radius: 4px; }
+        h2 { margin-top: 0; color: #4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; }
+        .online { background-color: #4CAF50; }
+        .offline { background-color: #f44336; }
+        label { display: block; margin-top: 10px; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; }
+        button { margin-top: 15px; padding: 10px 20px; background: #2196F3; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0b7dda; }
+        pre { background: #000; padding: 10px; overflow-x: auto; height: 200px; overflow-y: scroll; font-size: 12px; }
+        .log-entry { margin-bottom: 2px; }
+        .info { color: #2196F3; } .error { color: #f44336; }
+        #job-details { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ Pi Kiosk Dev Panel</h1>
+        
+        <!-- STATUS CARD -->
+        <div class="card">
+            <h2>Kiosk Status</h2>
+            <p><span class="status-dot online"></span> <strong>State:</strong> Online</p>
+            <p><strong>ID:</strong> {{ kiosk_id }}</p>
+            <p><strong>Backend:</strong> {{ backend_url }}</p>
+            <p><strong>Driver:</strong> {{ printer_driver }}</p>
+        </div>
+
+        <!-- UPLOAD CARD -->
+        <div class="card">
+            <h2>1. Upload File</h2>
+            <form id="uploadForm">
+                <label>Select PDF:</label>
+                <input type="file" id="fileInput" accept="application/pdf" required>
+                <button type="submit">Upload & Register</button>
+            </form>
+            <div id="uploadResult" style="margin-top: 10px;"></div>
+        </div>
+
+        <!-- JOB CARD -->
+        <div class="card" id="job-details">
+            <h2>2. Job Control</h2>
+            <p><strong>Job ID:</strong> <span id="displayJobId"></span></p>
+            <p><strong>Cost:</strong> <span id="displayCost"></span></p>
+            
+            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
+                <h3>Token Status: <span id="tokenStatus">WAITING</span></h3>
+                <button id="checkTokenBtn" onclick="checkToken()">Check Token Now</button>
+                <button id="printBtn" onclick="triggerPrint()" disabled style="background: #4CAF50; opacity: 0.5;">🖨️ PRINT NOW</button>
+            </div>
+        </div>
+
+        <!-- LOGS CARD -->
+        <div class="card">
+            <h2>System Logs</h2>
+            <pre id="logPanel">{{ logs|join('\n') }}</pre>
+            <button onclick="location.reload()">Refresh Logs</button>
+        </div>
+    </div>
+
+    <script>
+        let currentJobId = null;
+
+        // UPLOAD HANDLER
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('color_mode', 'false'); // Default to BW for dev
+
+            try {
+                // Determine upload URL - we use the API directly!
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    currentJobId = data.job_id;
+                    document.getElementById('displayJobId').innerText = currentJobId;
+                    document.getElementById('displayCost').innerText = data.payable_amount || "N/A";
+                    document.getElementById('job-details').style.display = 'block';
+                    document.getElementById('uploadResult').innerText = "✅ Job Registered!";
+                    document.getElementById('uploadResult').style.color = "#4CAF50";
+                    startPolling();
+                } else {
+                    throw new Error(data.detail || "Upload failed");
+                }
+            } catch (err) {
+                document.getElementById('uploadResult').innerText = "❌ Error: " + err.message;
+                document.getElementById('uploadResult').style.color = "#f44336";
+            }
+        });
+
+        // TOKEN CHECKER
+        async function checkToken() {
+            if (!currentJobId) return;
+            const res = await fetch(`/__dev/token_status/${currentJobId}`);
+            const data = await res.json();
+            
+            const tokenSpan = document.getElementById('tokenStatus');
+            tokenSpan.innerText = data.status;
+            
+            if (data.status === "READY") {
+                tokenSpan.style.color = "#4CAF50";
+                const btn = document.getElementById('printBtn');
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            } else {
+                tokenSpan.style.color = "#FF9800";
+            }
+        }
+
+        let pollInterval;
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(checkToken, 2000);
+        }
+
+        // PRINT TRIGGER
+        async function triggerPrint() {
+            if (!currentJobId) return;
+            if (!confirm("Confirm Print for " + currentJobId + "?")) return;
+            
+            try {
+                const res = await fetch(`/print/${currentJobId}`, { method: 'POST' });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert("✅ Printed! Check logs below.");
+                    location.reload();
+                } else {
+                    alert("❌ Print Failed: " + (data.detail || "Unknown error"));
+                }
+            } catch (err) {
+                alert("❌ Error: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
