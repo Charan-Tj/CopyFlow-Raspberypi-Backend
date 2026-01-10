@@ -84,6 +84,7 @@ def captive_portal_check():
 async def upload_file(file: UploadFile = File(...), color_mode: bool = Form(False)):
     # 1. Save file to temp_uploads
     file_id = uuid.uuid4()
+    os.makedirs("temp_uploads", exist_ok=True)
     temp_path = f"temp_uploads/{file_id}.pdf"
     
     try:
