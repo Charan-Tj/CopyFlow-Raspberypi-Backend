@@ -13,6 +13,13 @@ systemctl stop dnsmasq || true
 systemctl stop hostapd || true
 killall hostapd 2>/dev/null || true
 killall dnsmasq 2>/dev/null || true
+killall wpa_supplicant 2>/dev/null || true
+
+echo "   Stopping Network Managers..."
+systemctl stop NetworkManager 2>/dev/null || true
+systemctl stop wpa_supplicant 2>/dev/null || true
+systemctl stop dhcpcd 2>/dev/null || true
+
 
 killall hostapd 2>/dev/null || true
 killall dnsmasq 2>/dev/null || true

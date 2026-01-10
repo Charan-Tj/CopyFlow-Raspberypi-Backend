@@ -6,6 +6,11 @@ echo "❄️  Stopping Hotspot..."
 killall hostapd 2>/dev/null || true
 killall dnsmasq 2>/dev/null || true
 
+echo "   Restoring Network Managers..."
+systemctl restart NetworkManager 2>/dev/null || true
+systemctl restart dhcpcd 2>/dev/null || true
+
+
 # Restore Interface (Optional: could restart wpa_supplicant if we want to reconnect to home wifi)
 ifconfig wlan0 down
 ifconfig wlan0 up
