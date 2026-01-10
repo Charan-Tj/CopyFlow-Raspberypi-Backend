@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
         network_manager.start_hotspot()
 
     if settings.ENABLE_DEV_UI:
-        app_logger.info("⚠️ Developer UI Enabled at /__dev")
+        app_logger.info("WARN: Developer UI Enabled at /__dev")
     
     yield
     
