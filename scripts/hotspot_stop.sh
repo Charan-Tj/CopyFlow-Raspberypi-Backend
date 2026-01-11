@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "❄️  Stopping Hotspot..."
+echo "Stopping Hotspot..."
 
 # Kill services
 killall hostapd 2>/dev/null || true
@@ -19,4 +19,4 @@ ifconfig wlan0 up
 iptables -F
 iptables -t nat -F
 
-echo "✅ Hotspot stopped."
+echo "[OK] Hotspot stopped."
