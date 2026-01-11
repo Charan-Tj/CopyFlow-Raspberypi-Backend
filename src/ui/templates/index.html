@@ -6,10 +6,13 @@
     <title>Kiosk Dev Dashboard</title>
     <style>
         body {
-            font-family: monospace;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: #121212;
             color: #e0e0e0;
-            padding: 20px;
+            padding: 10px;
+            font-size: 16px;
+            /* Base size for mobile legible */
+            line-height: 1.5;
         }
 
         .container {
@@ -56,20 +59,29 @@
         input[type="text"],
         input[type="file"] {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
             margin-top: 5px;
             background: #2c2c2c;
             border: 1px solid #444;
             color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+            /* Fix width issues */
         }
 
         button {
+            display: inline-block;
             margin-top: 15px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: #2196F3;
             color: white;
             border: none;
             cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+            width: 100%;
+            /* Full width on mobile default */
+            max-width: 300px;
         }
 
         button:hover {
@@ -100,7 +112,24 @@
         #job-details {
             display: none;
         }
+
+        /* Responsive Improvements */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            button {
+                width: auto;
+            }
+
+            /* Auto width on desktop */
+            .container {
+                max-width: 800px;
+            }
+        }
     </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
@@ -110,7 +139,8 @@
             <h2 style="color: #FF9800;">⚠️ Open in Browser</h2>
             <p>File uploads are restricted in this login screen.</p>
             <p>1. Tap the <strong>3 dots</strong> (top right) &rarr; <strong>Use this network as is</strong> /
-                <strong>Stay Connected</strong>.</p>
+                <strong>Stay Connected</strong>.
+            </p>
             <p>2. Open <strong>Chrome</strong> / <strong>Safari</strong>.</p>
             <p>3. Go to: <a href="http://192.168.4.1:8000"
                     style="color: #2196F3; font-size: 1.2em;">http://192.168.4.1:8000</a></p>
