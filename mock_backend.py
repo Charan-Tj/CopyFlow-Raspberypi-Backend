@@ -14,7 +14,7 @@ app = FastAPI(title="Mock Backend")
 
 @app.post("/kiosks/{kiosk_id}/jobs")
 async def register_job(kiosk_id: str, job_data: dict):
-    print(f"📦 [MOCK] Registering job for Kiosk {kiosk_id}: {job_data}")
+    print(f"[MOCK] Registering job for Kiosk {kiosk_id}: {job_data}")
     # Generate a random job ID
     job_id = str(uuid.uuid4())
     return {
@@ -26,7 +26,7 @@ async def register_job(kiosk_id: str, job_data: dict):
 
 @app.get("/kiosks/{kiosk_id}/jobs/{job_id}/token")
 async def get_token(kiosk_id: str, job_id: str):
-    print(f"🔑 [MOCK] Generating token for Job {job_id}")
+    print(f"[MOCK] Generating token for Job {job_id}")
     
     # Generate valid token
     expiry = int(time.time()) + 3600 # 1 hour
@@ -37,5 +37,5 @@ async def get_token(kiosk_id: str, job_id: str):
     return {"token": token}
 
 if __name__ == "__main__":
-    print(f"🚀 Mock Backend running on port {PORT}")
+    print(f"[*] Mock Backend running on port {PORT}")
     uvicorn.run(app, host="0.0.0.0", port=PORT)
