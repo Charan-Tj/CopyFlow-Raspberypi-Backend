@@ -126,6 +126,7 @@
         function startPolling() {
             if (isPolling) return;
             isPolling = true;
+            checkStatus();
         }
 
         async function checkStatus() {
