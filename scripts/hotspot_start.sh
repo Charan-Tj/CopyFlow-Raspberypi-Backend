@@ -46,10 +46,11 @@ sysctl -w net.ipv4.ip_forward=1 > /dev/null
 echo "   Applying IPTables rules..."
 # Redirect HTTP (80) to FastAPI (8000)
 iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 80 -j DNAT --to-destination 192.168.4.1:8000
-# Note: HTTPS (443) redirection usually causes SSL errors, but ensures traffic doesn't escape.
-# For a friendly kiosk, we often leave it or redirect to a self-signed cert port. 
-# Here we redirect to 8000 (HTTP) which will fail SSL handshake but trap the connection.
-iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 443 -j DNAT --to-destination 192.168.4.1:8000
+# Note: We do NOT redirect 443 (HTTPS) to 8000 anymore.
+# Redirecting HTTPS to HTTP causes "Invalid HTTP request" errors in logs because
+# the browser sends encrypted SSL "Hello" packets which our HTTP server cannot understand.
+# By dropping/ignoring 443, the phone will quickly fail HTTPS and fallback to HTTP, which we catch below.
+# iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 443 -j DNAT --to-destination 192.168.4.1:8000
 
 echo "✅ Hotspot 'CopyFlow-Print' is active."
 
