@@ -10,44 +10,57 @@
 
 <body>
     <div class="container">
-        <header>
-            <h1>Status</h1>
-            <p class="subtitle">Job ID: <span id="jobIdDisplay">...</span></p>
-        </header>
+        <!-- PROGRESS VIEW -->
+        <div id="progressView">
+            <header>
+                <h1>Status</h1>
+                <p class="subtitle">Job ID: <span id="jobIdDisplay">...</span></p>
+            </header>
 
-        <div class="card status-indicator">
-            <div id="spinner" class="spinner"></div>
-            <div id="statusIcon" class="status-icon hidden"></div>
-            <h2 id="mainStatus">Checking...</h2>
-            <p id="subStatus" class="step-desc">Please wait</p>
+            <div class="card status-indicator">
+                <div id="spinner" class="spinner"></div>
+                <h2 id="mainStatus">Checking...</h2>
+                <p id="subStatus" class="step-desc">Please wait</p>
+            </div>
+
+            <div class="card">
+                <div class="step-card active" id="stepUpload">
+                    <span class="step-title">1. Uploaded</span>
+                    <span class="step-desc">Document received</span>
+                </div>
+                <div class="step-card" id="stepPayment">
+                    <span class="step-title">2. Payment</span>
+                    <span class="step-desc">Waiting for confirmation</span>
+                </div>
+                <div class="step-card" id="stepPrint">
+                    <span class="step-title">3. Printing</span>
+                    <span class="step-desc">Queueing job</span>
+                </div>
+            </div>
+
+            <div id="disconnectHint" class="card hidden" style="border: 1px solid var(--primary);">
+                <h3 class="text-primary" style="margin-bottom: 8px;">Payment Required</h3>
+                <p style="font-size: 0.9rem;">
+                    1. <strong>Disconnect</strong> from 'CopyFlow-Print' Wi-Fi.<br>
+                    2. Use <strong>Mobile Data</strong> to pay via the link sent to your phone/app.<br>
+                    3. <strong>Reconnect</strong> to 'CopyFlow-Print' to confirm print.
+                </p>
+            </div>
+
+            <a href="/upload" id="retryBtn" class="btn btn-secondary hidden">Start Over</a>
         </div>
 
-        <div class="card">
-            <div class="step-card active" id="stepUpload">
-                <span class="step-title">1. Uploaded</span>
-                <span class="step-desc">Document received</span>
-            </div>
-            <div class="step-card" id="stepPayment">
-                <span class="step-title">2. Payment</span>
-                <span class="step-desc">Waiting for confirmation</span>
-            </div>
-            <div class="step-card" id="stepPrint">
-                <span class="step-title">3. Printing</span>
-                <span class="step-desc">Queueing job</span>
-            </div>
-        </div>
-
-        <div id="disconnectHint" class="card hidden" style="border: 1px solid var(--primary);">
-            <h3 class="text-primary" style="margin-bottom: 8px;">Payment Required</h3>
-            <p style="font-size: 0.9rem;">
-                1. <strong>Disconnect</strong> from 'CopyFlow-Print' Wi-Fi.<br>
-                2. Use <strong>Mobile Data</strong> to pay via the link sent to your phone/app.<br>
-                3. <strong>Reconnect</strong> to 'CopyFlow-Print' to confirm print.
+        <!-- COMPLETED VIEW (Hidden by default) -->
+        <div id="completedView" class="hidden text-center" style="margin-top: 40px;">
+            <div style="font-size: 5rem; margin-bottom: 20px;">🎉</div>
+            <h1 style="margin-bottom: 10px; color: var(--success);">All Done!</h1>
+            <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 40px;">
+                Your document has been sent to the printer.<br>
+                Please collect it below.
             </p>
-        </div>
 
-        <!-- Hidden by default, shown if error -->
-        <a href="/upload" id="retryBtn" class="btn btn-secondary hidden">Start Over</a>
+            <a href="/upload" class="btn btn-primary">Print Another File</a>
+        </div>
     </div>
 
     <script>
@@ -55,11 +68,13 @@
         const jobId = urlParams.get('job_id');
         document.getElementById('jobIdDisplay').textContent = jobId ? jobId.slice(0, 8) : 'Unknown';
 
+        const progressView = document.getElementById('progressView');
+        const completedView = document.getElementById('completedView');
+
         const mainStatus = document.getElementById('mainStatus');
         const subStatus = document.getElementById('subStatus');
         const spinner = document.getElementById('spinner');
         const disconnectHint = document.getElementById('disconnectHint');
-        const statusIcon = document.getElementById('statusIcon');
 
         const stepUpload = document.getElementById('stepUpload');
         const stepPayment = document.getElementById('stepPayment');
@@ -96,7 +111,7 @@
 
         function updateUI(status) {
             // Reset styles
-            stepUpload.className = 'step-card done'; // Always done if here
+            stepUpload.className = 'step-card done';
 
             if (status === "WAITING") {
                 mainStatus.textContent = "Waiting for Payment";
@@ -144,23 +159,13 @@
         }
 
         function showSuccess() {
-            spinner.classList.add('hidden');
-            statusIcon.textContent = "✅";
-            statusIcon.classList.remove('hidden');
-            mainStatus.textContent = "Printing Started";
-            subStatus.textContent = "Please collect your document";
-
-            stepPayment.className = 'step-card done';
-            stepPrint.className = 'step-card done';
-            stepPrint.querySelector('.step-desc').textContent = "Sent to Printer";
-
-            disconnectHint.style.display = 'none';
+            // Swap views
+            progressView.classList.add('hidden');
+            completedView.classList.remove('hidden');
         }
 
         function showError(msg) {
             spinner.classList.add('hidden');
-            statusIcon.textContent = "⚠️";
-            statusIcon.classList.remove('hidden');
             mainStatus.textContent = "Error";
             subStatus.textContent = msg;
             document.getElementById('retryBtn').classList.remove('hidden');
