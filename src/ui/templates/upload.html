@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CopyFlow Upload</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>CopyFlow</h1>
+            <p class="subtitle">Secure Kiosk Printing</p>
+        </header>
+
+        <form id="uploadForm" class="card">
+            <div class="input-group" id="dropZone">
+                <input type="file" id="file" name="file" accept="application/pdf" required>
+                <div class="file-content">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                    <div class="file-label">Tap to select PDF</div>
+                    <div class="file-selected-text hidden" id="fileName"></div>
+                </div>
+            </div>
+
+            <label>Print Settings</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="color_mode" id="bw" value="false" checked>
+                    <label class="radio-tile" for="bw">
+                        <span style="font-size: 1.5rem; margin-bottom: 4px;">⚫</span>
+                        <span class="radio-label">B&W</span>
+                    </label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="color_mode" id="color" value="true">
+                    <label class="radio-tile" for="color">
+                        <span style="font-size: 1.5rem; margin-bottom: 4px;">🎨</span>
+                        <span class="radio-label">Color</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                Upload Document
+            </button>
+        </form>
+
+        <div id="errorBox" class="card hidden" style="border-color: var(--error);">
+            <p class="text-error text-center" id="errorMsg"></p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file');
+        const fileNameDisplay = document.getElementById('fileName');
+        const fileLabel = document.querySelector('.file-label');
+        const form = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorBox = document.getElementById('errorBox');
+        const errorMsg = document.getElementById('errorMsg');
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const name = e.target.files[0].name;
+                fileNameDisplay.textContent = name;
+                fileNameDisplay.classList.remove('hidden');
+                fileLabel.classList.add('hidden');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.classList.add('hidden');
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Simple client-side validation
+            if (file.type !== 'application/pdf') {
+                showError("Only PDF files are supported.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Uploading...";
+
+            const formData = new FormData();
+            formData.append('file', file);
+            const colorMode = document.querySelector('input[name="color_mode"]:checked').value;
+            formData.append('color_mode', colorMode);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = `/status?job_id=${data.job_id}`;
+                } else {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Upload failed");
+                }
+            } catch (error) {
+                showError(error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Upload Document";
+            }
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorBox.classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>

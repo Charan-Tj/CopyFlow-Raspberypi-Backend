@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Error - CopyFlow</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Something went wrong</h1>
+        </header>
+
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">😵</div>
+            <p class="text-error" style="font-size: 1.1rem; margin-bottom: 20px;">
+                {{ error_detail }}
+            </p>
+            <p class="subtitle" style="margin-bottom: 30px;">
+                Please try again or contact support if the issue persists.
+            </p>
+
+            <a href="/upload" class="btn btn-primary">Try Again</a>
+        </div>
+    </div>
+</body>
+
+</html>

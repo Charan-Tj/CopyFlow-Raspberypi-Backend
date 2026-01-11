@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Job Status - CopyFlow</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Status</h1>
+            <p class="subtitle">Job ID: <span id="jobIdDisplay">...</span></p>
+        </header>
+
+        <div class="card status-indicator">
+            <div id="spinner" class="spinner"></div>
+            <div id="statusIcon" class="status-icon hidden"></div>
+            <h2 id="mainStatus">Checking...</h2>
+            <p id="subStatus" class="step-desc">Please wait</p>
+        </div>
+
+        <div class="card">
+            <div class="step-card active" id="stepUpload">
+                <span class="step-title">1. Uploaded</span>
+                <span class="step-desc">Document received</span>
+            </div>
+            <div class="step-card" id="stepPayment">
+                <span class="step-title">2. Payment</span>
+                <span class="step-desc">Waiting for confirmation</span>
+            </div>
+            <div class="step-card" id="stepPrint">
+                <span class="step-title">3. Printing</span>
+                <span class="step-desc">Queueing job</span>
+            </div>
+        </div>
+
+        <div id="disconnectHint" class="card hidden" style="border: 1px solid var(--primary);">
+            <h3 class="text-primary" style="margin-bottom: 8px;">Payment Required</h3>
+            <p style="font-size: 0.9rem;">
+                1. <strong>Disconnect</strong> from 'CopyFlow-Print' Wi-Fi.<br>
+                2. Use <strong>Mobile Data</strong> to pay via the link sent to your phone/app.<br>
+                3. <strong>Reconnect</strong> to 'CopyFlow-Print' to confirm print.
+            </p>
+        </div>
+
+        <!-- Hidden by default, shown if error -->
+        <a href="/upload" id="retryBtn" class="btn btn-secondary hidden">Start Over</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('job_id');
+        document.getElementById('jobIdDisplay').textContent = jobId ? jobId.slice(0, 8) : 'Unknown';
+
+        const mainStatus = document.getElementById('mainStatus');
+        const subStatus = document.getElementById('subStatus');
+        const spinner = document.getElementById('spinner');
+        const disconnectHint = document.getElementById('disconnectHint');
+        const statusIcon = document.getElementById('statusIcon');
+
+        const stepUpload = document.getElementById('stepUpload');
+        const stepPayment = document.getElementById('stepPayment');
+        const stepPrint = document.getElementById('stepPrint');
+
+        let isPrinting = false;
+
+        async function checkStatus() {
+            if (!jobId) {
+                showError("No Job ID provided");
+                return;
+            }
+
+            try {
+                // Poll check endpoint
+                const response = await fetch(`/check_job/${jobId}`);
+                if (!response.ok) throw new Error("Connection failed");
+
+                const data = await response.json();
+                updateUI(data.status);
+
+                if (data.status === "PRINTED") {
+                    return; // Stop polling
+                }
+            } catch (err) {
+                console.log("Polling error (offline?):", err);
+                // We don't show error immediately as user might be switching networks
+            }
+
+            if (!isPrinting) {
+                setTimeout(checkStatus, 3000);
+            }
+        }
+
+        function updateUI(status) {
+            // Reset styles
+            stepUpload.className = 'step-card done'; // Always done if here
+
+            if (status === "WAITING") {
+                mainStatus.textContent = "Waiting for Payment";
+                subStatus.textContent = "Reconnect after paying";
+
+                stepPayment.className = 'step-card active';
+                stepPrint.className = 'step-card';
+
+                disconnectHint.classList.remove('hidden');
+                spinner.style.borderTopColor = "#f59e0b"; // Warning color
+
+            } else if (status === "READY") {
+                // Determine if we should trigger print? 
+                // The prompt says "Reconnect to continue printing" -> "Printing started"
+                // Ideally the backend/UI triggers print automatically or we show a button.
+                // Prompt: "Reconnect to Wi-Fi" -> "See 'Printing started'"
+                // So automatic is best.
+
+                startPrint();
+            } else if (status === "PRINTING" || status === "PRINTED") {
+                showSuccess();
+            }
+        }
+
+        async function startPrint() {
+            if (isPrinting) return;
+            isPrinting = true;
+
+            mainStatus.textContent = "Starting Print...";
+            disconnectHint.classList.add('hidden');
+            stepPayment.className = 'step-card done';
+            stepPrint.className = 'step-card active';
+
+            try {
+                const res = await fetch(`/print/${jobId}`, { method: 'POST' });
+                if (res.ok) {
+                    showSuccess();
+                } else {
+                    const d = await res.json();
+                    showError(d.detail || "Print failed");
+                }
+            } catch (e) {
+                showError("Failed to trigger print");
+            }
+        }
+
+        function showSuccess() {
+            spinner.classList.add('hidden');
+            statusIcon.textContent = "✅";
+            statusIcon.classList.remove('hidden');
+            mainStatus.textContent = "Printing Started";
+            subStatus.textContent = "Please collect your document";
+
+            stepPayment.className = 'step-card done';
+            stepPrint.className = 'step-card done';
+
+            disconnectHint.style.display = 'none';
+        }
+
+        function showError(msg) {
+            spinner.classList.add('hidden');
+            statusIcon.textContent = "⚠️";
+            statusIcon.classList.remove('hidden');
+            mainStatus.textContent = "Error";
+            subStatus.textContent = msg;
+            document.getElementById('retryBtn').classList.remove('hidden');
+        }
+
+        // Start polling
+        checkStatus();
+
+    </script>
+</body>
+
+</html>

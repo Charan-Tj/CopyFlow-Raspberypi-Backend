@@ -38,12 +38,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Copy Flow Pi Kiosk", lifespan=lifespan)
 
-# Mount User Interface (Dev Only)
+from fastapi.staticfiles import StaticFiles
+
+# Mount Static Files
+app.mount("/static", StaticFiles(directory="src/ui/static"), name="static")
+
+# Mount User Interface
+from src.ui.routes import public_router
+app.include_router(public_router)
+
+# Mount Dev Interface (Dev Only)
 if settings.ENABLE_DEV_UI:
-    from src.ui.routes import router as ui_router
-    from src.ui.routes import public_router
-    app.include_router(ui_router)
-    app.include_router(public_router)
+    from src.ui.routes import dev_router
+    app.include_router(dev_router)
 
 backend_client = BackendClient()
 
