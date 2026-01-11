@@ -17,11 +17,19 @@ async def register_job(kiosk_id: str, job_data: dict):
     print(f"[MOCK] Registering job for Kiosk {kiosk_id}: {job_data}")
     # Generate a random job ID
     job_id = str(uuid.uuid4())
+    
+    # Calculate Cost
+    pages = job_data.get("num_pages", 1)
+    is_color = job_data.get("color", False)
+    rate = 10 if is_color else 5
+    cost = pages * rate
+    
     return {
         "job_id": job_id,
-        "payable_amount": 50,
+        "payable_amount": cost,
         "currency": "INR",
-        "status": "created"
+        "status": "created",
+        "meta": {"pages": pages, "color": is_color}
     }
 
 @app.get("/kiosks/{kiosk_id}/jobs/{job_id}/token")

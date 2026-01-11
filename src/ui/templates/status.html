@@ -10,8 +10,25 @@
 
 <body>
     <div class="container">
+        <!-- SUMMARY VIEW -->
+        <div id="summaryView" class="hidden text-center card">
+            <h2>Order Summary</h2>
+            <div style="margin: 20px 0;">
+                <p style="font-size: 1.2rem; margin-bottom: 5px;">
+                    <span id="summaryPages">?</span> Pages
+                </p>
+                <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">
+                    ₹<span id="summaryCost">0</span>
+                </div>
+            </div>
+
+            <button id="proceedPayBtn" class="btn btn-primary" onclick="confirmPayment()">
+                Proceed to Payment
+            </button>
+        </div>
+
         <!-- PROGRESS VIEW -->
-        <div id="progressView">
+        <div id="progressView" class="hidden">
             <header>
                 <h1>Status</h1>
                 <p class="subtitle">Job ID: <span id="jobIdDisplay">...</span></p>
@@ -66,8 +83,12 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('job_id');
+        const cost = urlParams.get('cost');
+        const pages = urlParams.get('pages');
+
         document.getElementById('jobIdDisplay').textContent = jobId ? jobId.slice(0, 8) : 'Unknown';
 
+        const summaryView = document.getElementById('summaryView');
         const progressView = document.getElementById('progressView');
         const completedView = document.getElementById('completedView');
 
@@ -75,12 +96,37 @@
         const subStatus = document.getElementById('subStatus');
         const spinner = document.getElementById('spinner');
         const disconnectHint = document.getElementById('disconnectHint');
+        const statusIcon = document.getElementById('statusIcon');
 
         const stepUpload = document.getElementById('stepUpload');
         const stepPayment = document.getElementById('stepPayment');
         const stepPrint = document.getElementById('stepPrint');
 
         let isPrinting = false;
+        let isPolling = false;
+
+        // INIT
+        if (cost && pages) {
+            // Show Summary
+            document.getElementById('summaryCost').textContent = cost;
+            document.getElementById('summaryPages').textContent = pages;
+            summaryView.classList.remove('hidden');
+        } else {
+            // No info? Go straight to polling
+            progressView.classList.remove('hidden');
+            startPolling();
+        }
+
+        function confirmPayment() {
+            summaryView.classList.add('hidden');
+            progressView.classList.remove('hidden');
+            startPolling();
+        }
+
+        function startPolling() {
+            if (isPolling) return;
+            isPolling = true;
+        }
 
         async function checkStatus() {
             if (!jobId) {
@@ -172,7 +218,6 @@
         }
 
         // Start polling
-        checkStatus();
 
     </script>
 </body>

@@ -104,12 +104,25 @@ async def upload_file(file: UploadFile = File(...), color_mode: bool = Form(Fals
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         file_hash = sha256_hash.hexdigest()
-        
-        # 3. Call Backend
+        # 3. Calculate Page Count (using pdfinfo)
+        num_pages = 1
+        try:
+            import subprocess
+            import re
+            cmd = ["pdfinfo", temp_path]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            match = re.search(r"Pages:\s+(\d+)", result.stdout)
+            if match:
+                num_pages = int(match.group(1))
+        except Exception as e: 
+            app_logger.error(f"Page count failed: {e}")
+
+        # 4. Call Backend
         job_data = backend_client.register_job(
             file_hash=file_hash,
             file_name=file.filename,
-            color_mode=color_mode
+            color_mode=color_mode,
+            num_pages=num_pages
         )
         
         job_id = job_data.get("job_id")

@@ -8,7 +8,7 @@ class BackendClient:
         self.base_url = str(settings.BACKEND_URL).rstrip("/")
         self.kiosk_id = settings.KIOSK_ID
 
-    def register_job(self, file_hash: str, file_name: str, color_mode: bool = False):
+    def register_job(self, file_hash: str, file_name: str, color_mode: bool = False, **kwargs):
         """
         Registers a print job with the backend.
         """
@@ -16,7 +16,9 @@ class BackendClient:
         payload = {
             "file_hash": file_hash,
             "filename": file_name,
-            "color": color_mode
+            "color": color_mode,
+            "num_pages": kwargs.get("num_pages", 0),
+            "estimated_cost": kwargs.get("estimated_cost", 0)
         }
         
         # Note: In a real implementation, we might want to calculate page count here or have the backend do it.

@@ -100,7 +100,14 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    window.location.href = `/status?job_id=${data.job_id}`;
+
+                    // Build query params
+                    const params = new URLSearchParams();
+                    params.append('job_id', data.job_id);
+                    if (data.payable_amount) params.append('cost', data.payable_amount);
+                    if (data.meta && data.meta.pages) params.append('pages', data.meta.pages);
+
+                    window.location.href = `/status?${params.toString()}`;
                 } else {
                     const err = await response.json();
                     throw new Error(err.detail || "Upload failed");
