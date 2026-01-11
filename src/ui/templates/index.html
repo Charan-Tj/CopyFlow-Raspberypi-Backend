@@ -1,30 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Kiosk Dev Dashboard</title>
     <style>
-        body { font-family: monospace; background: #121212; color: #e0e0e0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: #1e1e1e; padding: 15px; margin-bottom: 20px; border: 1px solid #333; border-radius: 4px; }
-        h2 { margin-top: 0; color: #4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; }
-        .online { background-color: #4CAF50; }
-        .offline { background-color: #f44336; }
-        label { display: block; margin-top: 10px; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; }
-        button { margin-top: 15px; padding: 10px 20px; background: #2196F3; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0b7dda; }
-        pre { background: #000; padding: 10px; overflow-x: auto; height: 200px; overflow-y: scroll; font-size: 12px; }
-        .log-entry { margin-bottom: 2px; }
-        .info { color: #2196F3; } .error { color: #f44336; }
-        #job-details { display: none; }
+        body {
+            font-family: monospace;
+            background: #121212;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e1e1e;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #4CAF50;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #bbb;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .online {
+            background-color: #4CAF50;
+        }
+
+        .offline {
+            background-color: #f44336;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: white;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0b7dda;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+            height: 200px;
+            overflow-y: scroll;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+        }
+
+        .info {
+            color: #2196F3;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        #job-details {
+            display: none;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
+        <!-- CAPTIVE PORTAL WARNING -->
+        <div id="captive-warning" class="card" style="border: 2px solid #FF9800; display: none;">
+            <h2 style="color: #FF9800;">⚠️ Open in Browser</h2>
+            <p>File uploads are restricted in this login screen.</p>
+            <p>1. Tap the <strong>3 dots</strong> (top right) &rarr; <strong>Use this network as is</strong> /
+                <strong>Stay Connected</strong>.</p>
+            <p>2. Open <strong>Chrome</strong> / <strong>Safari</strong>.</p>
+            <p>3. Go to: <a href="http://192.168.4.1:8000"
+                    style="color: #2196F3; font-size: 1.2em;">http://192.168.4.1:8000</a></p>
+            <button onclick="navigator.clipboard.writeText('http://192.168.4.1:8000'); alert('Copied!')">Copy
+                Link</button>
+        </div>
+
         <h1>🛠️ Pi Kiosk Dev Panel</h1>
-        
+
         <!-- STATUS CARD -->
         <div class="card">
             <h2>Kiosk Status</h2>
@@ -50,11 +145,12 @@
             <h2>2. Job Control</h2>
             <p><strong>Job ID:</strong> <span id="displayJobId"></span></p>
             <p><strong>Cost:</strong> <span id="displayCost"></span></p>
-            
+
             <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
                 <h3>Token Status: <span id="tokenStatus">WAITING</span></h3>
                 <button id="checkTokenBtn" onclick="checkToken()">Check Token Now</button>
-                <button id="printBtn" onclick="triggerPrint()" disabled style="background: #4CAF50; opacity: 0.5;">🖨️ PRINT NOW</button>
+                <button id="printBtn" onclick="triggerPrint()" disabled style="background: #4CAF50; opacity: 0.5;">🖨️
+                    PRINT NOW</button>
             </div>
         </div>
 
@@ -67,6 +163,13 @@
     </div>
 
     <script>
+        // DETECT CAPTIVE PORTAL / MOBILE
+        // Simple heuristic: If screen is small, we assume mobile. 
+        // Real captive portals often have specific User-Agents, but this is safe default.
+        if (window.innerWidth < 800) {
+            document.getElementById('captive-warning').style.display = 'block';
+        }
+
         let currentJobId = null;
 
         // UPLOAD HANDLER
@@ -81,7 +184,7 @@
                 // Determine upload URL - we use the API directly!
                 const res = await fetch('/upload', { method: 'POST', body: formData });
                 const data = await res.json();
-                
+
                 if (res.ok) {
                     currentJobId = data.job_id;
                     document.getElementById('displayJobId').innerText = currentJobId;
@@ -104,10 +207,10 @@
             if (!currentJobId) return;
             const res = await fetch(`/__dev/token_status/${currentJobId}`);
             const data = await res.json();
-            
+
             const tokenSpan = document.getElementById('tokenStatus');
             tokenSpan.innerText = data.status;
-            
+
             if (data.status === "READY") {
                 tokenSpan.style.color = "#4CAF50";
                 const btn = document.getElementById('printBtn');
@@ -128,11 +231,11 @@
         async function triggerPrint() {
             if (!currentJobId) return;
             if (!confirm("Confirm Print for " + currentJobId + "?")) return;
-            
+
             try {
                 const res = await fetch(`/print/${currentJobId}`, { method: 'POST' });
                 const data = await res.json();
-                
+
                 if (res.ok) {
                     alert("✅ Printed! Check logs below.");
                     location.reload();
@@ -145,4 +248,5 @@
         }
     </script>
 </body>
+
 </html>
