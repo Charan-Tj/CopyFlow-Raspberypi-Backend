@@ -22,9 +22,35 @@
                 </div>
             </div>
 
-            <button id="proceedPayBtn" class="btn btn-primary" onclick="confirmPayment()">
-                Proceed to Payment
-            </button>
+            <!-- RAZORPAY SECTION -->
+            <div class="razorpay-section">
+                <div
+                    style="margin-bottom: 20px; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(30, 41, 59, 0.5);">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" alt="Razorpay"
+                        style="height: 32px; display: block; margin: 0 auto 16px;">
+                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 20px;">Use any UPI App (GPay,
+                        PhonePe)</p>
+
+                    <div
+                        style="background: white; padding: 12px; display: inline-block; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <!-- Static QR for mocked flow -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=copyflow@razorpay&pn=CopyFlow&am=10.00"
+                            alt="UPI QR" style="display: block;">
+                    </div>
+
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-top: 10px;">
+                        <strong>Scan via Mobile Data</strong>
+                        <br>Wi-Fi will disconnect automatically
+                    </div>
+                </div>
+
+                <button id="proceedPayBtn" class="btn btn-primary"
+                    style="background: linear-gradient(135deg, #3399cc 0%, #297aae 100%); display: flex; align-items: center; justify-content: center; gap: 10px;"
+                    onclick="confirmPayment()">
+                    <span>Pay via Payment Link</span>
+                    <span style="font-size: 1.2em;">&rarr;</span>
+                </button>
+            </div>
         </div>
 
         <!-- PROGRESS VIEW -->
